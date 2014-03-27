@@ -1,65 +1,70 @@
-import os, sys
-
-from setuptools.command import install as install_command
-from setuptools.command import develop as develop_command
 from setuptools import setup, find_packages
+
+from setuptools.command.develop import develop as develop_command
+from pbr.packaging import LocalInstall as install_command
 
 import ipdb
 
-def minimal(command_subclass):
 
-    command_subclass.user_options = [
-        ('minimal', None, "Some option to indicate a minimal install")
-    ] + command_subclass.user_options
+def add_option(cls, dag, description, boolean=False):
+    """Return tuple of user_options, boolean_options."""
+    cls.user_options = [
+        (dag, None, description)
+    ] + cls.user_options
 
-    command_subclass.boolean_options = [
-        'minimal'
-    ] + command_subclass.boolean_options
+    if boolean:
+        cls.boolean_options = [dag] + cls.boolean_options
 
-    orig_run = command_subclass.run
-    orig_init = command_subclass.__init__
-    orig_initopt = command_subclass.initialize_options
+    # no dupes
+    cls.user_options = list(set(cls.user_options))
+    cls.boolean_options = list(set(cls.boolean_options))
+    return cls.user_options, cls.boolean_options
 
-    def modified_init(self, *args, **kwargs):
+
+class CustomDevelopCommand(develop_command):
+
+    command_name = 'develop'
+    user_options, boolean_options = add_option(
+        develop_command, 'minimal',
+        'Some option to indiciate a minimal install',
+        boolean=True)
+
+    def __init__(self, *args, **kwargs):
+        print "MODIFIED INIT: %s" % self.__class__
         self.minimal = False
-        print "modified init"
-        orig_init(self, *args, **kwargs)
+        develop_command.__init__(self, *args, **kwargs)
 
-    def modified_run(self, *args, **kwargs):
+    def run(self, *args, **kwargs):
         if self.minimal:
-            # use prb primitives to read requirements.txt
-            # pop stuff off the list it creates
-            self.distribution.install_requires
-        import ipdb;ipdb.set_trace()
-        orig_run(self, *args, **kwargs)
+            print "SELF.MINIMAL"
+        print "MODIFIED RUN: %s" % self.__class__
+        print self.distribution.install_requires
+        develop_command.run(self, *args, **kwargs)
 
-    command_subclass.run = modified_run
-    command_subclass.__init__ = modified_init
-    return command_subclass
 
-@minimal
-class CustomDevelopCommand(develop_command.develop):
-    pass
+class CustomInstallCommand(install_command):
 
-@minimal
-class CustomInstallCommand(install_command.install):
-    pass
+    command_name = 'install'
+    user_options, boolean_options = add_option(
+        install_command, 'minimal',
+        'Some option to indiciate a minimal install',
+        boolean=True)
 
-dependencies = ['requests']
+    def __init__(self, *args, **kwargs):
+        print "MODIFIED INIT: %s" % self.__class__
+        self.minimal = False
+        install_command.__init__(self, *args, **kwargs)
 
-setup(
-     cmdclass={
-        'install': CustomInstallCommand,
-        'develop': CustomDevelopCommand},
-    name='pyp-sandbox',
-    description='test package for distutils/setuptools and general python packaging',
-    version='1.0.0',
-    entry_points = {'console_scripts': ['pypsandbox=pypsandbox.pypsandbox:main']},
-    packages = find_packages(exclude=['tests']),
-    author='samstav',
-    author_email='smlstvnh@gmail.com',
-    install_requires=dependencies,
-    license='Apache 2',
-    classifiers=["Programming Language :: Python"],
-    url='https://github.com/smlstvnh/pyp-sandbox'
-)
+    def run(self, *args, **kwargs):
+        if self.minimal:
+            print "SELF.MINIMAL"
+        print "MODIFIED RUN: %s" % self.__class__
+        print self.distribution.install_requires
+        install_command.run(self, *args, **kwargs)
+
+if __name__ == '__main__':
+
+    setup(
+        setup_requires=['pbr'],
+        pbr=True)
+
