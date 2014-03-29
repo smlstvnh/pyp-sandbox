@@ -1,0 +1,9 @@
+CHANGES
+=======
+
+* use pbr-samstav for the no-clobber patch
+* pip is passing --install-option too far
+* subclass pbr's LocalInstall class
+* experimenting with setuptools.command
+* Update README.md
+* Initial commit
