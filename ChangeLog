@@ -1,6 +1,8 @@
 CHANGES
 =======
 
+* authors and changelog
+* bump version
 * use pbr-samstav for the no-clobber patch
 * pip is passing --install-option too far
 * subclass pbr's LocalInstall class
