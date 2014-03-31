@@ -13,15 +13,16 @@ if __name__ == '__main__':
         #parser.add_argument("--minimal", action="store_true", help=MINIMAL)
         #config, unknown = parser.parse_known_args()
         #if config.minimal:
-        if '--minimal' in sys.argv or sys.argv[1] not in ('install', 'develop'):
-            print "SETTING PBR_REQUIREMENTS_FILES"
+        install = sys.argv[1] in ('install', 'develop')
+        if not install or (install and '--minimal' in sys.argv[1:]):
+            print "[ %s ] SETTING PBR_REQUIREMENTS_FILES to minimal-requirements.txt" % sys.argv[1]
             os.environ['PBR_REQUIREMENTS_FILES'] = 'minimal-requirements.txt'
-            try:
+            if install:
                 sys.argv.remove('--minimal')
-            except ValueError:
-                pass
 
     setup(
         setup_requires=['pbr-samstav'],
         pbr=True)
+
+    os.environ['PBR_REQUIREMENTS_FILES'] = ''
 
